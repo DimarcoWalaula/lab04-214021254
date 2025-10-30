@@ -3,6 +3,27 @@ const live = document.getElementById("live");
 const cards = document.getElementById("cards");
 const tableBody = document.querySelector("#summary tbody");
 const themeToggle = document.getElementById('themeToggle');
+const STORAGE_KEY = 'wad621s-profiles';
+
+function readProfilesFromStorage(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+function writeProfilesToStorage(profiles){
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles)); } catch {}
+}
+function upsertProfileToStorage(profile){
+  const profiles = readProfilesFromStorage();
+  const index = profiles.findIndex(p => p.id === profile.id);
+  if(index >= 0) profiles[index] = profile; else profiles.unshift(profile);
+  writeProfilesToStorage(profiles);
+}
+function removeProfileFromStorage(id){
+  const profiles = readProfilesFromStorage().filter(p => p.id !== id);
+  writeProfilesToStorage(profiles);
+}
 
 // Theme: load preference from localStorage
 function applyTheme(isDark){
@@ -52,31 +73,58 @@ form.addEventListener("submit", (e) => {
   let valid = true;
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  const setErr = (id, msg) => {
-    document.getElementById(id).textContent = msg;
-    if (msg) valid = false;
+  let firstInvalidElement = null;
+  const markError = (inputId, errorId, message) => {
+    const inputEl = document.getElementById(inputId);
+    const errorEl = document.getElementById(errorId);
+    errorEl.textContent = message;
+    if (message) {
+      valid = false;
+      inputEl.setAttribute('aria-invalid', 'true');
+      if (!firstInvalidElement) firstInvalidElement = inputEl;
+    } else {
+      inputEl.setAttribute('aria-invalid', 'false');
+    }
   };
 
-  setErr("err-first", data.first ? "" : "Required");
-  setErr("err-last", data.last ? "" : "Required");
-  setErr("err-email", emailPattern.test(data.email) ? "" : "Invalid email");
-  setErr("err-prog", data.prog ? "" : "Required");
-  setErr("err-year", data.year ? "" : "Select a year");
+  markError("first", "err-first", data.first ? "" : "Required");
+  markError("last", "err-last", data.last ? "" : "Required");
+  markError("email", "err-email", emailPattern.test(data.email) ? "" : "Please enter a valid email.");
+  markError("prog", "err-prog", data.prog ? "" : "Required");
+  // year is a radio group; set error but aria-invalid handled on the first input
+  const yearError = data.year ? "" : "Select a year";
+  document.getElementById("err-year").textContent = yearError;
+  if (!data.year) {
+    valid = false;
+    const firstYearInput = document.querySelector("input[name='year']");
+    if (firstYearInput) {
+      firstYearInput.setAttribute('aria-invalid', 'true');
+      if (!firstInvalidElement) firstInvalidElement = firstYearInput;
+    }
+  } else {
+    document.querySelectorAll("input[name='year']").forEach(el => el.setAttribute('aria-invalid', 'false'));
+  }
 
   if (!valid) {
     live.textContent = "Please fix errors before submitting.";
+    if (firstInvalidElement && typeof firstInvalidElement.focus === 'function') {
+      firstInvalidElement.focus();
+    }
     return;
   }
 
-  addEntry(data);
+  // Assign an id for persistence
+  data.id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `id_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+  addEntry(data, { persist: true });
   form.reset();
   live.textContent = "Student added successfully!";
 });
 
-function addEntry(data) {
+function addEntry(data, options = { persist: false }) {
   // Create card
   const card = document.createElement("div");
   card.className = "card-person";
+  if (data.id) card.dataset.id = data.id;
   card.innerHTML = `
     <img src="${data.photo || "https://placehold.co/150"}" alt="${data.first}">
     <div><h3>${data.first} ${data.last}</h3>
@@ -96,6 +144,7 @@ function addEntry(data) {
 
   // Create table row
   const tr = document.createElement("tr");
+  if (data.id) tr.dataset.id = data.id;
   tr.innerHTML = `
     <td>${data.first} ${data.last}</td>
     <td>${data.prog}</td>
@@ -109,9 +158,23 @@ function addEntry(data) {
   card.querySelector(".remove").addEventListener("click", () => {
     card.remove();
     tr.remove();
+    if (data.id) removeProfileFromStorage(data.id);
   });
   tr.querySelector(".remove").addEventListener("click", () => {
     card.remove();
     tr.remove();
+    if (data.id) removeProfileFromStorage(data.id);
   });
+
+  if (options.persist) {
+    upsertProfileToStorage(data);
+  }
 }
+
+// Restore saved profiles on load
+window.addEventListener('DOMContentLoaded', () => {
+  const savedProfiles = readProfilesFromStorage();
+  if (Array.isArray(savedProfiles) && savedProfiles.length > 0) {
+    savedProfiles.forEach(p => addEntry(p, { persist: false }));
+  }
+});
