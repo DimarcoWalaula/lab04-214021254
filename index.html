@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Student registration form that creates profile cards and a summary table." />
+  <title>Student Registration - Fitty Walaula</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <h1>Fitty Walaula</h1>
+        <p class="tagline">Student Registration — cards &amp; table</p>
+      </div>
+      <div class="header-actions">
+        <label class="visually-hidden" for="themeSelect">Choose theme</label>
+        <select id="themeSelect" aria-label="Theme selector">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="fitty">Fitty Walaula</option>
+        </select>
+        <button id="themeToggle" class="theme-toggle" aria-pressed="false" title="Toggle dark/light (T)">Toggle theme</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section aria-labelledby="form-heading">
+      <h2 id="form-heading" class="visually-hidden">Registration form</h2>
+
+      <form id="regForm" novalidate>
+        <label for="first">First Name *</label>
+        <input type="text" id="first" required />
+        <small class="error" id="err-first"></small>
+
+        <label for="last">Last Name *</label>
+        <input type="text" id="last" required />
+        <small class="error" id="err-last"></small>
+
+        <label for="email">Email *</label>
+        <input type="email" id="email" required />
+        <small class="error" id="err-email"></small>
+
+        <label for="prog">Programme *</label>
+        <input type="text" id="prog" required />
+        <small class="error" id="err-prog"></small>
+
+        <fieldset>
+          <legend>Year of Study *</legend>
+          <label><input type="radio" name="year" value="1" required /> 1</label>
+          <label><input type="radio" name="year" value="2" /> 2</label>
+          <label><input type="radio" name="year" value="3" /> 3</label>
+          <label><input type="radio" name="year" value="4" /> 4</label>
+          <small class="error" id="err-year"></small>
+        </fieldset>
+
+        <label for="interests">Interests (comma separated)</label>
+        <input type="text" id="interests" />
+
+        <label for="photo">Photo URL</label>
+        <input type="url" id="photo" placeholder="https://..." />
+
+        <div aria-live="polite" id="live"></div>
+        <button type="submit" class="primary">Add Student</button>
+      </form>
+    </section>
+
+    <section aria-labelledby="cards-heading">
+      <h2 id="cards-heading">Profile Cards</h2>
+      <div id="cards" class="cards"></div>
+    </section>
+
+    <section aria-labelledby="summary-heading">
+      <h2 id="summary-heading">Summary Table</h2>
+      <table id="summary">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Programme</th>
+            <th>Year</th>
+            <th>Interests</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2025 Fitty Walaula — Lab 4. Theme preference is saved in your browser.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+</html>
